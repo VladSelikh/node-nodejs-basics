@@ -1,19 +1,26 @@
-import { cp } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { cp, access, constants } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 const copy = async () => {
-  const fullSourcePath = process.cwd() + "/src/fs/files";
+  const fullSourcePath = fileURLToPath(new URL("./files", import.meta.url));
   const fullDestinationPath = fullSourcePath + "_copy";
-  const errorMessage = "FS operation failed";
+  const customErrorMessage = "FS operation failed";
 
-  if (!existsSync(fullSourcePath)) {
-    throw Error(errorMessage);
-  } else if (existsSync(fullDestinationPath)) {
-    throw Error(errorMessage);
-  } else {
-    await cp(fullSourcePath, fullDestinationPath, {
-      recursive: true,
-    });
+  try {
+    await access(fullSourcePath, constants.F_OK);
+    try {
+      await access(fullDestinationPath, constants.F_OK);
+      throw new Error(customErrorMessage);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        return await cp(fullSourcePath, fullDestinationPath, {
+          recursive: true,
+        });
+      }
+      throw new Error(error.message);
+    }
+  } catch (error) {
+    throw new Error(error.code === "ENOENT" ? customErrorMessage : error.message);
   }
 };
 

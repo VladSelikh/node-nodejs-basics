@@ -1,18 +1,26 @@
 import * as fsPromises from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 
 const rename = async () => {
-  const fullDirectoryPath = process.cwd() + "/src/fs/files/";
-  const fullInitialFilePath = fullDirectoryPath + "wrongFileName.txt";
-  const fullNewFilePath = fullDirectoryPath + "properFilename.md";
-  const errorMessage = "FS operation failed";
+  const fullDirectoryPath = fileURLToPath(new URL("./files", import.meta.url));
+  const fullInitialFilePath = path.join(fullDirectoryPath, "wrongFileName.txt");
+  const fullNewFilePath = path.join(fullDirectoryPath, "properFilename.md");
+  const customErrorMessage = "FS operation failed";
 
-  if (!existsSync(fullInitialFilePath)) {
-    throw Error(errorMessage);
-  } else if (existsSync(fullNewFilePath)) {
-    throw Error(errorMessage);
-  } else {
-    await fsPromises.rename(fullInitialFilePath, fullNewFilePath);
+  try {
+    await fsPromises.access(fullInitialFilePath, fsPromises.constants.F_OK);
+    try {
+      await fsPromises.access(fullNewFilePath, fsPromises.constants.F_OK);
+      throw new Error(customErrorMessage);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        return await fsPromises.rename(fullInitialFilePath, fullNewFilePath)
+      }
+      throw new Error(error.message);
+    }
+  } catch (error) {
+    throw new Error(error.code === "ENOENT" ? customErrorMessage : error.message);
   }
 };
 

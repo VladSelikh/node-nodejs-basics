@@ -1,13 +1,14 @@
-import { unlink } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { unlink, access, constants } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 const remove = async () => {
-  const filePath = process.cwd() + "/src/fs/files/fileToRemove.txt";
+  const filePath = fileURLToPath(new URL("./files/fileToRemove.txt", import.meta.url));
 
-  if (!existsSync(filePath)) {
-    throw Error("FS operation failed");
-  } else {
+  try {
+    await access(filePath, constants.F_OK);
     await unlink(filePath);
+  } catch(error) {
+    throw new Error(error.code === "ENOENT" ? "FS operation failed" : error.message);
   }
 };
 

@@ -1,13 +1,18 @@
-import { writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { writeFile, access, constants } from "node:fs/promises";
+import { fileURLToPath } from 'node:url';
 
 const create = async () => {
-  const fullFilePath = process.cwd() + "/src/fs/files/fresh.txt";
+  const fullFilePath = fileURLToPath(new URL("./files/fresh.txt", import.meta.url));
+  const errorMessage = "FS operation failed";
 
-  if (existsSync(fullFilePath)) {
-    throw Error("FS operation failed");
-  } else {
-    await writeFile(fullFilePath, "I am fresh and young");
+  try {
+    await access(fullFilePath, constants.F_OK);
+    throw new Error(errorMessage);
+  } catch(error) {
+    if(error.code === "ENOENT") {
+        return await writeFile(fullFilePath, "I am fresh and young");
+    }
+    throw new Error(error.message);
   }
 };
 

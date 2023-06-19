@@ -1,15 +1,18 @@
-import { readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { readFile, access, constants } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 const read = async () => {
-  const fullFilePath = process.cwd() + "/src/fs/files/fileToRead.txt";
+  const fullFilePath = fileURLToPath(
+    new URL("./files/fileToRead.txt", import.meta.url)
+  );
 
-  if (!existsSync(fullFilePath)) {
-    throw Error("FS operation failed");
-  } else {
+  try {
+    await access(fullFilePath, constants.F_OK);
     const content = await readFile(fullFilePath, { encoding: "utf8" });
 
     console.log(content);
+  } catch(error) {
+    throw new Error(error.code === "ENOENT" ? "FS operation failed" : error.message);
   }
 };
 
