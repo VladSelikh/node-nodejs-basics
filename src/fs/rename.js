@@ -7,6 +7,7 @@ const rename = async () => {
   const fullInitialFilePath = path.join(fullDirectoryPath, "wrongFileName.txt");
   const fullNewFilePath = path.join(fullDirectoryPath, "properFilename.md");
   const customErrorMessage = "FS operation failed";
+  const noSuchFileCode = "ENOENT";
 
   try {
     await fsPromises.access(fullInitialFilePath, fsPromises.constants.F_OK);
@@ -14,13 +15,13 @@ const rename = async () => {
       await fsPromises.access(fullNewFilePath, fsPromises.constants.F_OK);
       throw new Error(customErrorMessage);
     } catch (error) {
-      if (error.code === "ENOENT") {
+      if (error.code === noSuchFileCode) {
         return await fsPromises.rename(fullInitialFilePath, fullNewFilePath)
       }
       throw new Error(error.message);
     }
   } catch (error) {
-    throw new Error(error.code === "ENOENT" ? customErrorMessage : error.message);
+    throw new Error(error.code === noSuchFileCode ? customErrorMessage : error.message);
   }
 };
 
