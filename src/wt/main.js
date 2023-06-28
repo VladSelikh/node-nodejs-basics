@@ -16,19 +16,22 @@ const performCalculations = async () => {
   for (let i = 0; i < cpusNumber; i++) {
     promisesArray.push(
       new Promise((resolve, reject) => {
-        const worker = new Worker(pathToFileWithWorker);
-        worker.postMessage(increment);
+        const worker = new Worker(pathToFileWithWorker, {
+          workerData: increment,
+        });
         worker.on("message", (result) =>
           resolve({ status: "resolved", data: result })
         );
         worker.on("error", () => reject({ status: "error", data: null }));
-        increment += 1;
       })
     );
+    increment += 1;
   }
 
   console.log(
-    (await Promise.allSettled(promisesArray)).map((result) => result.value)
+    (await Promise.allSettled(promisesArray)).map((result) =>
+      result.status === "fulfilled" ? result.value : result.reason
+    )
   );
 };
 
